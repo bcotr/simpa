@@ -29,6 +29,10 @@ class SegmentationClasses:
     MEDIPRENE = 11
     SOFT_TISSUE = 12
     LYMPH_NODE = 13
+    ARTERY = 14
+    VEIN = 15
+    RANDOM_ARTERY = 16
+    RANDOM_VEIN = 17
 
 
 wavelength_dependent_properties = [
@@ -40,6 +44,8 @@ wavelength_dependent_properties = [
 wavelength_independent_properties = [
     Tags.DATA_FIELD_GRUNEISEN_PARAMETER,
     Tags.DATA_FIELD_SEGMENTATION,
+    Tags.DATA_FIELD_SEGMENTATION_EXT,
+    'struct_filling',
     Tags.DATA_FIELD_OXYGENATION,
     Tags.DATA_FIELD_DENSITY,
     Tags.DATA_FIELD_SPEED_OF_SOUND,
@@ -55,6 +61,9 @@ simulation_output = [Tags.DATA_FIELD_FLUENCE,
                      Tags.OPTICAL_MODEL_UNITS,
                      Tags.DATA_FIELD_TIME_SERIES_DATA,
                      Tags.DATA_FIELD_RECONSTRUCTED_DATA,
+                     Tags.DATA_FIELD_RECONSTRUCTED_DATA+'_not_int_',
+                     'spacing_extended_x',
+                     'spacing_extended_y',
                      Tags.DATA_FIELD_DIFFUSE_REFLECTANCE,
                      Tags.DATA_FIELD_DIFFUSE_REFLECTANCE_POS,
                      Tags.DATA_FIELD_PHOTON_EXIT_POS,

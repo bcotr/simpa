@@ -4,11 +4,11 @@
 
 from simpa.core.simulation_modules.volume_creation_module import VolumeCreatorModuleBase
 from simpa.utils.libraries.structure_library import priority_sorted_structures
-from simpa.utils import Tags
+from simpa.utils import Tags, SegmentationClasses, create_deformation_settings
 import numpy as np
-from simpa.utils import create_deformation_settings
 import torch
-
+from simpa.utils.dict_path_manager import generate_dict_path
+from simpa.io_handling.io_hdf5 import save_hdf5
 
 class ModelBasedVolumeCreationAdapter(VolumeCreatorModuleBase):
     """
@@ -64,11 +64,26 @@ class ModelBasedVolumeCreationAdapter(VolumeCreatorModuleBase):
                                               dtype=torch.float, device=self.torch_device)
         max_added_fractions = torch.zeros((x_dim_px, y_dim_px, z_dim_px), dtype=torch.float, device=self.torch_device)
         wavelength = self.global_settings[Tags.WAVELENGTH]
-
+        
+        tiss_dict = self.component_settings['structures']
+        structures_filling = np.zeros((x_dim_px, z_dim_px, len(tiss_dict)))
+        n = 0
         for structure in priority_sorted_structures(self.global_settings, self.component_settings):
             self.logger.debug(type(structure))
 
             structure_properties = structure.properties_for_wavelength(wavelength)
+            
+            try:
+                if 'artery' in structure.params[5] and 'random' not in structure.params[5]:
+                    structure_properties[Tags.DATA_FIELD_SEGMENTATION] = SegmentationClasses.ARTERY
+                elif 'vein' in structure.params[5] and 'random' not in structure.params[5]:
+                    structure_properties[Tags.DATA_FIELD_SEGMENTATION] = SegmentationClasses.VEIN
+                elif 'random_artery' in structure.params[5]:
+                    structure_properties[Tags.DATA_FIELD_SEGMENTATION] = SegmentationClasses.RANDOM_ARTERY
+                elif 'random_vein' in structure.params[5]:
+                    structure_properties[Tags.DATA_FIELD_SEGMENTATION] = SegmentationClasses.RANDOM_VEIN
+            except:
+                print("params[5] non presente in structure")
 
             structure_volume_fractions = torch.as_tensor(
                 structure.geometrical_volume, dtype=torch.float, device=self.torch_device)
@@ -86,6 +101,10 @@ class ModelBasedVolumeCreationAdapter(VolumeCreatorModuleBase):
                 fraction_to_be_filled = structure_volume_fractions[selector_more_than_1]
                 added_volume_fraction[selector_more_than_1] = torch.min(torch.stack((remaining_volume_fraction_to_fill,
                                                                                      fraction_to_be_filled)), 0).values
+            
+            structures_filling[:,:,n] = added_volume_fraction[:,int((self.global_settings[Tags.DIM_VOLUME_Y_MM]/2)/self.global_settings[Tags.SPACING_MM]),:].cpu().numpy()
+            n += 1
+            
             for key in volumes.keys():
                 if structure_properties[key] is None:
                     continue
@@ -102,5 +121,8 @@ class ModelBasedVolumeCreationAdapter(VolumeCreatorModuleBase):
         # convert volumes back to CPU
         for key in volumes.keys():
             volumes[key] = volumes[key].cpu().numpy().astype(np.float64, copy=False)
+        
+        struct_path = generate_dict_path('struct_filling')
+        save_hdf5(structures_filling, self.global_settings[Tags.SIMPA_OUTPUT_PATH], struct_path)
 
         return volumes

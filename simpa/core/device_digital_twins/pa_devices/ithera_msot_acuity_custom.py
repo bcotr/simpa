@@ -15,7 +15,7 @@ from simpa.utils.libraries.tissue_library import TISSUE_LIBRARY
 import numpy as np
 
 
-class MSOTAcuityEcho(PhotoacousticDevice):
+class MSOTAcuityEcho_custom(PhotoacousticDevice):
     """
     This class represents a digital twin of the MSOT Acuity Echo, manufactured by iThera Medical, Munich, Germany
     (https://www.ithera-medical.com/products/msot-acuity/). It is based on the real specifications of the device, but
@@ -38,7 +38,7 @@ class MSOTAcuityEcho(PhotoacousticDevice):
     """
 
     def __init__(self, device_position_mm: np.ndarray = None,
-                 field_of_view_extent_mm: np.ndarray = None):
+                 field_of_view_extent_mm: np.ndarray = None, number_detectors=256):
         """
         :param device_position_mm: Each device has an internal position which serves as origin for internal \
         representations of e.g. detector element positions or illuminator positions.
@@ -48,8 +48,11 @@ class MSOTAcuityEcho(PhotoacousticDevice):
         positions.
         :type field_of_view_extent_mm: ndarray
         """
-        super(MSOTAcuityEcho, self).__init__(device_position_mm=device_position_mm)
+        super(MSOTAcuityEcho_custom, self).__init__(device_position_mm=device_position_mm)
 
+        pitch_mm = 0.34 * (256/number_detectors)        
+
+        self.number_detectors = number_detectors
         self.mediprene_membrane_height_mm = 1
         self.probe_height_mm = 43.2
         self.focus_in_field_of_view_mm = 8
@@ -57,8 +60,8 @@ class MSOTAcuityEcho(PhotoacousticDevice):
                                                          np.array([0, 0, self.focus_in_field_of_view_mm]))
 
         if field_of_view_extent_mm is None:
-            self.field_of_view_extent_mm = np.asarray([-(2 * np.sin(0.34 / 40 * 128) * 40) / 2,
-                                                       (2 * np.sin(0.34 / 40 * 128) * 40) / 2,
+            self.field_of_view_extent_mm = np.asarray([-(2 * np.sin(pitch_mm / 40 * 128) * 40) / 2,
+                                                       (2 * np.sin(pitch_mm / 40 * 128) * 40) / 2,
                                                        0, 0, 0, 50])
         else:
             self.field_of_view_extent_mm = field_of_view_extent_mm
@@ -68,7 +71,7 @@ class MSOTAcuityEcho(PhotoacousticDevice):
 
         detection_geometry = CurvedArrayDetectionGeometry(pitch_mm=0.34,
                                                           radius_mm=40,
-                                                          number_detector_elements=256,
+                                                          number_detector_elements=number_detectors,
                                                           detector_element_width_mm=0.24,
                                                           detector_element_length_mm=13,
                                                           center_frequency_hz=3.96e6,
@@ -104,6 +107,7 @@ class MSOTAcuityEcho(PhotoacousticDevice):
                                 "settings dictionary.")
             return
 
+        number_detectors = self.number_detectors        
         probe_size_mm = self.probe_height_mm
         mediprene_layer_height_mm = self.mediprene_membrane_height_mm
         heavy_water_layer_height_mm = probe_size_mm - mediprene_layer_height_mm
@@ -221,12 +225,13 @@ class MSOTAcuityEcho(PhotoacousticDevice):
 
     def serialize(self) -> dict:
         serialized_device = self.__dict__
-        device_dict = {"MSOTAcuityEcho": serialized_device}
+        device_dict = {"MSOTAcuityEcho_custom": serialized_device}
         return device_dict
 
     @staticmethod
     def deserialize(dictionary_to_deserialize):
-        deserialized_device = MSOTAcuityEcho()
+        deserialized_device = MSOTAcuityEcho_custom()
         for key, value in dictionary_to_deserialize.items():
             deserialized_device.__dict__[key] = value
         return deserialized_device
+

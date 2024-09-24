@@ -32,7 +32,7 @@ class MCXAdapter(OpticalForwardModuleBase):
 
         :param global_settings: global settings used during simulations
         """
-        super(MCXAdapter, self).__init__(global_settings=global_settings)
+        super().__init__(global_settings=global_settings)
         self.mcx_json_config_file = None
         self.mcx_volumetric_data_file = None
         self.frames = None

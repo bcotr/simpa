@@ -17,5 +17,7 @@ from .illumination_geometries.disk_illumination import DiskIlluminationGeometry
 from .illumination_geometries.ithera_msot_acuity_illumination import MSOTAcuityIlluminationGeometry
 from .illumination_geometries.ithera_msot_invision_illumination import MSOTInVisionIlluminationGeometry
 from .pa_devices.ithera_msot_invision import InVision256TF
+from .pa_devices.ithera_msot_invision_custom import InVision256TF_custom
 from .pa_devices.ithera_msot_acuity import MSOTAcuityEcho
+from .pa_devices.ithera_msot_acuity_custom import MSOTAcuityEcho_custom
 from .pa_devices.ithera_rsom import RSOMExplorerP50

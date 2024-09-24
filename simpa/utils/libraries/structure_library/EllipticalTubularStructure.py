@@ -39,7 +39,8 @@ class EllipticalTubularStructure(GeometricalStructure):
                   single_structure_settings[Tags.STRUCTURE_END_MM],
                   single_structure_settings[Tags.STRUCTURE_RADIUS_MM],
                   single_structure_settings[Tags.STRUCTURE_ECCENTRICITY],
-                  single_structure_settings[Tags.CONSIDER_PARTIAL_VOLUME])
+                  single_structure_settings[Tags.CONSIDER_PARTIAL_VOLUME],
+                  single_structure_settings[Tags.VESSEL_TYPE])
         return params
 
     def to_settings(self):
@@ -49,10 +50,11 @@ class EllipticalTubularStructure(GeometricalStructure):
         settings[Tags.STRUCTURE_RADIUS_MM] = self.params[2]
         settings[Tags.STRUCTURE_ECCENTRICITY] = self.params[3]
         settings[Tags.CONSIDER_PARTIAL_VOLUME] = self.params[4]
+        settings[Tags.VESSEL_TYPE] = self.params[5]
         return settings
 
     def get_enclosed_indices(self):
-        start_mm, end_mm, radius_mm, eccentricity, partial_volume = self.params
+        start_mm, end_mm, radius_mm, eccentricity, partial_volume, vessel_type = self.params
         start_mm = torch.tensor(start_mm, dtype=torch.float, device=self.torch_device)
         end_mm = torch.tensor(end_mm, dtype=torch.float, device=self.torch_device)
         radius_mm = torch.tensor(radius_mm, dtype=torch.float, device=self.torch_device)
@@ -135,6 +137,7 @@ class EllipticalTubularStructure(GeometricalStructure):
 def define_elliptical_tubular_structure_settings(tube_start_mm: list,
                                                  tube_end_mm: list,
                                                  molecular_composition: MolecularComposition,
+                                                 vessel_type: str,
                                                  radius_mm: float = 2,
                                                  eccentricity: float = 0.5,
                                                  priority: int = 10,
@@ -152,5 +155,6 @@ def define_elliptical_tubular_structure_settings(tube_start_mm: list,
         Tags.MOLECULE_COMPOSITION: molecular_composition,
         Tags.CONSIDER_PARTIAL_VOLUME: consider_partial_volume,
         Tags.ADHERE_TO_DEFORMATION: adhere_to_deformation,
-        Tags.STRUCTURE_TYPE: Tags.ELLIPTICAL_TUBULAR_STRUCTURE
+        Tags.STRUCTURE_TYPE: Tags.ELLIPTICAL_TUBULAR_STRUCTURE,
+        Tags.VESSEL_TYPE: vessel_type
     }

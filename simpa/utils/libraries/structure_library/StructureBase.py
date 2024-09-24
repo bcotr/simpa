@@ -7,7 +7,7 @@ from abc import abstractmethod
 import numpy as np
 
 from simpa.log import Logger
-from simpa.utils import Settings, Tags, get_functional_from_deformation_settings
+from simpa.utils import Settings, Tags, get_functional_from_deformation_settings, create_deformation_settings
 from simpa.utils.libraries.molecule_library import MolecularComposition
 from simpa.utils.tissue_properties import TissueProperties
 from simpa.utils.processing_device import get_processing_device
@@ -44,6 +44,18 @@ class GeometricalStructure:
             self.do_deformation = False
 
         self.logger.debug(f"This structure will simulate deformations: {self.do_deformation}")
+        
+        if Tags.SIMULATE_DEFORMED_LAYERS in global_settings.get_volume_creation_settings() \
+                and global_settings.get_volume_creation_settings()[Tags.SIMULATE_DEFORMED_LAYERS]:
+            self.logger.debug("Tags.SIMULATE_DEFORMED_LAYERS in self.component_settings is TRUE")
+            if Tags.DEFORMED_LAYERS_SETTINGS not in global_settings.get_volume_creation_settings():
+                np.random.seed(global_settings[Tags.RANDOM_SEED])
+                global_settings.get_volume_creation_settings()[Tags.DEFORMED_LAYERS_SETTINGS] = create_deformation_settings(
+                    bounds_mm=[[0, global_settings[Tags.DIM_VOLUME_X_MM]],
+                               [0, global_settings[Tags.DIM_VOLUME_Y_MM]]],
+                    maximum_z_elevation_mm=3,
+                    filter_sigma=0,
+                    cosine_scaling_factor=1)
 
         if self.do_deformation and Tags.DEFORMED_LAYERS_SETTINGS in global_settings.get_volume_creation_settings():
             self.deformation_functional_mm = get_functional_from_deformation_settings(

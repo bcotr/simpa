@@ -878,6 +878,12 @@ class Tags:
     Segmentation of the generated volume/structure.\n
     Usage: SIMPA package, naming convention
     """
+    
+    DATA_FIELD_SEGMENTATION_EXT = "seg_ext"
+    """
+    Segmentation of the generated volume/structure.\n
+    Usage: SIMPA package, naming convention
+    """
 
     DATA_FIELD_GRUNEISEN_PARAMETER = "gamma"
     """
@@ -1162,6 +1168,12 @@ class Tags:
     """
 
     # Structures
+    VESSEL_TYPE = ("vessel_type", str)
+    """"
+    To plot arteries, veins, random arteries and random vains with different colors.
+    """
+    
+    
     STRUCTURES = ("structures", dict)
     """
     Settings dictionary which contains all the structures that should be generated inside the volume.\n
