@@ -575,3 +575,77 @@ def compute_delay_and_sum_values(time_series_sensor_data: Tensor, sensor_positio
     del delays  # free memory of delays
 
     return values, n_sensor_elements
+    
+    def compute_delay_and_sum_values_not_int(time_series_sensor_data: Tensor, sensor_positions: torch.tensor, xdim: int,
+                                 ydim: int, zdim: int, xdim_start: int, xdim_end: int, ydim_start: int, ydim_end: int,
+                                 zdim_start: int, zdim_end: int, spacing_in_mm: float, speed_of_sound_in_m_per_s: float,
+                                 time_spacing_in_ms: float, logger: Logger, torch_device: torch.device,
+                                 component_settings: Settings) -> Tuple[torch.tensor, int]:
+    """
+    Perform the core computation of Delay and Sum, without summing up the delay dependend values.
+    Returns
+    - values (torch tensor) of the time series data corrected for delay and sensor positioning, ready to be summed up
+    - and n_sensor_elements (int) which might be used for later computations
+    """
+
+
+    spacing_new_mm_x = xdim * spacing_in_mm / time_series_sensor_data.shape[0]
+    spacing_new_mm_y = (speed_of_sound_in_m_per_s * time_spacing_in_ms) #* spacing_in_mm / time_series_sensor_data.shape[1]
+    print(spacing_new_mm_x)
+    xdim = time_series_sensor_data.shape[0]
+    ydim = time_series_sensor_data.shape[1]-1
+
+
+    if time_series_sensor_data.shape[0] < sensor_positions.shape[0]:
+        logger.warning("Warning: The time series data has less sensor element entries than the given sensor positions. "
+                       "This might be due to a low simulated resolution, please increase it.")
+
+    n_sensor_elements = time_series_sensor_data.shape[0]
+
+    logger.debug(f'Number of pixels in X dimension: {xdim}, Y dimension: {ydim}, Z dimension: {zdim} '
+                 f',number of sensor elements: {n_sensor_elements}')
+
+    x_offset = 0.5 if xdim % 2 == 0 else 0  # to ensure pixels are symmetrically arranged around the 0 like the
+    # sensor positions, add an offset of 0.5 pixels if the dimension is even
+
+    x = xdim_start * spacing_in_mm + torch.arange(xdim, device=torch_device, dtype=torch.float32) * spacing_new_mm_x + x_offset* spacing_new_mm_x
+    y = ydim_start * spacing_in_mm + torch.arange(ydim, device=torch_device, dtype=torch.float32)* spacing_new_mm_y
+    if zdim == 1:
+        z = torch.arange(zdim, device=torch_device, dtype=torch.float32)
+    else:
+        z = zdim_start + torch.arange(zdim, device=torch_device, dtype=torch.float32)
+    j = torch.arange(n_sensor_elements, device=torch_device, dtype=torch.float32)
+
+    xx, yy, zz, jj = torch.meshgrid(x, y, z, j)
+    jj = jj.long()
+
+    delays = torch.sqrt((yy  - sensor_positions[:, 2][jj]) ** 2 +
+                        (xx  - sensor_positions[:, 0][jj]) ** 2 +
+                        (zz * spacing_in_mm - sensor_positions[:, 1][jj]) ** 2) \
+        / (speed_of_sound_in_m_per_s * time_spacing_in_ms)
+
+    # perform index validation
+    invalid_indices = torch.where(torch.logical_or(delays < 0, delays >= float(time_series_sensor_data.shape[1])))
+    torch.clip_(delays, min=0, max=time_series_sensor_data.shape[1] - 1)
+
+    # interpolation of delays
+    lower_delays = (torch.floor(delays)).long()
+    upper_delays = lower_delays + 1
+    torch.clip_(upper_delays, min=0, max=time_series_sensor_data.shape[1] - 1)
+    lower_values = time_series_sensor_data[jj, lower_delays]
+    upper_values = time_series_sensor_data[jj, upper_delays]
+    values = lower_values * (upper_delays - delays) + upper_values * (delays - lower_delays)
+
+    # perform apodization if specified
+    if Tags.RECONSTRUCTION_APODIZATION_METHOD in component_settings:
+        apodization = get_apodization_factor(apodization_method=component_settings[Tags.RECONSTRUCTION_APODIZATION_METHOD],
+                                             dimensions=(xdim, ydim, zdim), n_sensor_elements=n_sensor_elements,
+                                             device=torch_device)
+        values = values * apodization
+
+    # set values of invalid indices to 0 so that they don't influence the result
+    values[invalid_indices] = 0
+
+    del delays  # free memory of delays
+
+    return values, n_sensor_elements, spacing_new_mm_x, spacing_new_mm_y

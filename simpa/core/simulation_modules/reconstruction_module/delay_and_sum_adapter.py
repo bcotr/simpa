@@ -7,9 +7,11 @@ from simpa.core.simulation_modules.reconstruction_module import ReconstructionAd
 import numpy as np
 import torch
 from simpa.core.simulation_modules.reconstruction_module.reconstruction_utils import compute_delay_and_sum_values, \
-    compute_image_dimensions, preparing_reconstruction_and_obtaining_reconstruction_settings
+    compute_image_dimensions, preparing_reconstruction_and_obtaining_reconstruction_settings, compute_delay_and_sum_values_not_int
 from simpa.core.device_digital_twins import DetectionGeometryBase
 from simpa.core.simulation_modules.reconstruction_module import create_reconstruction_settings
+from simpa.utils.dict_path_manager import generate_dict_path
+from simpa.io_handling.io_hdf5 import save_hdf5
 
 
 class DelayAndSumAdapter(ReconstructionAdapterBase):
@@ -39,8 +41,14 @@ class DelayAndSumAdapter(ReconstructionAdapterBase):
 
         # construct output image
         output = torch.zeros((xdim, ydim, zdim), dtype=torch.float32, device=torch_device)
+        output_not_int = torch.zeros((time_series_sensor_data.shape[0], time_series_sensor_data.shape[1]), dtype=torch.float32, device=torch_device)
 
         values, _ = compute_delay_and_sum_values(time_series_sensor_data, sensor_positions, xdim,
+                                                 ydim, zdim, xdim_start, xdim_end, ydim_start, ydim_end, zdim_start, zdim_end, spacing_in_mm, speed_of_sound_in_m_per_s,
+                                                 time_spacing_in_ms, self.logger, torch_device,
+                                                 self.component_settings)
+        
+        values_not_int, _, spacing_notint_x, spacing_notint_y = compute_delay_and_sum_values_not_int(time_series_sensor_data, sensor_positions, xdim,
                                                  ydim, zdim, xdim_start, xdim_end, ydim_start, ydim_end, zdim_start, zdim_end, spacing_in_mm, speed_of_sound_in_m_per_s,
                                                  time_spacing_in_ms, self.logger, torch_device,
                                                  self.component_settings)
@@ -48,8 +56,20 @@ class DelayAndSumAdapter(ReconstructionAdapterBase):
         _sum = torch.sum(values, dim=3)
         counter = torch.count_nonzero(values, dim=3)
         torch.divide(_sum, counter, out=output)
+        
+        _sum_not_int = torch.sum(values_not_int, dim=3)
+        counter_not_int = torch.count_nonzero(values_not_int, dim=3)
+        torch.divide(_sum_not_int, counter_not_int, out=output_not_int)
 
         reconstructed = output.cpu().numpy()
+        reconstructed_not_int = output_not_int.cpu().numpy()
+
+        reconstruction_output_path = generate_dict_path(Tags.DATA_FIELD_RECONSTRUCTED_DATA+'_not_int_', self.global_settings[Tags.WAVELENGTH])
+        save_hdf5(reconstructed_not_int.squeeze(), self.global_settings[Tags.SIMPA_OUTPUT_PATH], reconstruction_output_path)
+        recon_path_x = generate_dict_path('spacing_extended_x', self.global_settings[Tags.WAVELENGTH])
+        save_hdf5(spacing_notint_x, self.global_settings[Tags.SIMPA_OUTPUT_PATH], recon_path_x)
+        recon_path_y = generate_dict_path('spacing_extended_y', self.global_settings[Tags.WAVELENGTH])
+        save_hdf5(spacing_notint_y, self.global_settings[Tags.SIMPA_OUTPUT_PATH], recon_path_y)
 
         return reconstructed.squeeze()
 
