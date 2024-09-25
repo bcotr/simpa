@@ -28,7 +28,7 @@ class SegmentationClasses:
     COUPLING_ARTIFACT = 10
     MEDIPRENE = 11
     SOFT_TISSUE = 12
-    LYMPH_NODE = 
+    LYMPH_NODE = 13
     ARTERY = 14
     VEIN = 15
     RANDOM_ARTERY = 16

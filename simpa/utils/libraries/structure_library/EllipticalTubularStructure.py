@@ -136,7 +136,7 @@ class EllipticalTubularStructure(GeometricalStructure):
 def define_elliptical_tubular_structure_settings(tube_start_mm: list,
                                                  tube_end_mm: list,
                                                  molecular_composition: MolecularComposition,
-                                                 vessel_type: str,
+                                                 vessel_type: str = 'none',
                                                  radius_mm: float = 2,
                                                  eccentricity: float = 0.5,
                                                  priority: int = 10,

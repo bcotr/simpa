@@ -576,18 +576,18 @@ def compute_delay_and_sum_values(time_series_sensor_data: Tensor, sensor_positio
 
     return values, n_sensor_elements
     
-    def compute_delay_and_sum_values_not_int(time_series_sensor_data: Tensor, sensor_positions: torch.tensor, xdim: int,
-                                 ydim: int, zdim: int, xdim_start: int, xdim_end: int, ydim_start: int, ydim_end: int,
-                                 zdim_start: int, zdim_end: int, spacing_in_mm: float, speed_of_sound_in_m_per_s: float,
-                                 time_spacing_in_ms: float, logger: Logger, torch_device: torch.device,
-                                 component_settings: Settings) -> Tuple[torch.tensor, int]:
+def compute_delay_and_sum_values_not_int(time_series_sensor_data: Tensor, sensor_positions: torch.tensor, xdim: int,
+                             ydim: int, zdim: int, xdim_start: int, xdim_end: int, ydim_start: int, ydim_end: int,
+                             zdim_start: int, zdim_end: int, spacing_in_mm: float, speed_of_sound_in_m_per_s: float,
+                             time_spacing_in_ms: float, logger: Logger, torch_device: torch.device,
+                             component_settings: Settings) -> Tuple[torch.tensor, int]:
+    
     """
     Perform the core computation of Delay and Sum, without summing up the delay dependend values.
     Returns
     - values (torch tensor) of the time series data corrected for delay and sensor positioning, ready to be summed up
     - and n_sensor_elements (int) which might be used for later computations
     """
-
 
     spacing_new_mm_x = xdim * spacing_in_mm / time_series_sensor_data.shape[0]
     spacing_new_mm_y = (speed_of_sound_in_m_per_s * time_spacing_in_ms) #* spacing_in_mm / time_series_sensor_data.shape[1]

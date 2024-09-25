@@ -65,11 +65,11 @@ class DelayAndSumAdapter(ReconstructionAdapterBase):
         reconstructed_not_int = output_not_int.cpu().numpy()
 
         reconstruction_output_path = generate_dict_path(Tags.DATA_FIELD_RECONSTRUCTED_DATA+'_not_int_', self.global_settings[Tags.WAVELENGTH])
-        save_hdf5(reconstructed_not_int.squeeze(), self.global_settings[Tags.SIMPA_OUTPUT_PATH], reconstruction_output_path)
+        save_hdf5(reconstructed_not_int.squeeze(), self.global_settings[Tags.SIMPA_OUTPUT_FILE_PATH], reconstruction_output_path)
         recon_path_x = generate_dict_path('spacing_extended_x', self.global_settings[Tags.WAVELENGTH])
-        save_hdf5(spacing_notint_x, self.global_settings[Tags.SIMPA_OUTPUT_PATH], recon_path_x)
+        save_hdf5(spacing_notint_x, self.global_settings[Tags.SIMPA_OUTPUT_FILE_PATH], recon_path_x)
         recon_path_y = generate_dict_path('spacing_extended_y', self.global_settings[Tags.WAVELENGTH])
-        save_hdf5(spacing_notint_y, self.global_settings[Tags.SIMPA_OUTPUT_PATH], recon_path_y)
+        save_hdf5(spacing_notint_y, self.global_settings[Tags.SIMPA_OUTPUT_FILE_PATH], recon_path_y)
 
         return reconstructed.squeeze()
 

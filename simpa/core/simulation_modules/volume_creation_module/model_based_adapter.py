@@ -134,6 +134,6 @@ class ModelBasedAdapter(VolumeCreationAdapterBase):
             volumes[key] = volumes[key].cpu().numpy().astype(np.float64, copy=False)
             
         struct_path = generate_dict_path('struct_filling')
-        save_hdf5(structures_filling, self.global_settings[Tags.SIMPA_OUTPUT_PATH], struct_path)
+        save_hdf5(structures_filling, self.global_settings[Tags.SIMPA_OUTPUT_FILE_PATH], struct_path)
 
         return volumes
